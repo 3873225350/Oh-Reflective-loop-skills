@@ -1,0 +1,45 @@
+---
+name: minimax-loop
+description: Sets up and manages an autonomous scheduler loop based on reflective machine learning metaphors (Pretrained Backbone, Local Adapters, Error Banks). Use when asked to setup or manage a minimax-loop.
+---
+
+# MiniMax Loop Skill (Reflective ML Edition)
+
+This skill provides an automated framework for running an autonomous coding loop using MiniMax CLI (mmx), heavily inspired by ML training principles.
+
+## Architecture
+
+The loop treats long-horizon agent work as a layered optimization process:
+
+- **`roadmap.md` (Pretrained Backbone):** Slow parameters. Represents the global prior.
+- **`active_task.json` (PEFT/LoRA Adapter):** Fast parameters. Represents localized execution state.
+- **`failure_bank.json` (Reusable Failure Memory):** Prevents recurring mistakes.
+- **`optimize` (Forward Pass):** Agent executes one verifiable slice.
+- **`check` (Backward Signal):** Generates a **Local Patch** to guide the next pass.
+
+## MiniMax-Specific Implementation
+
+| Aspect | Implementation |
+|--------|---------------|
+| **CLI Flags** | `mmx text chat --non-interactive --quiet --output text --message` |
+| **Model Fallback** | MiniMax models (configurable) |
+| **Session** | Multi-turn with conversation files |
+| **State** | `active_task.json` for fast adapter, `last_mode.txt` for mode state |
+
+## Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/dispatch_agent.sh` | Dispatch with MiniMax-specific invoke_agent function |
+| `scripts/run_daemon.sh` | Daemon loop with mode switching |
+| `scripts/init_minimax_loop.cjs` | Initializes a new loop instance |
+
+## Usage
+
+```bash
+# Start daemon for a loop
+bash minimax-loop/scripts/run_daemon.sh <LOOP_NAME>
+
+# Manual dispatch
+bash minimax-loop/scripts/dispatch_agent.sh <optimize|check> <LOOP_NAME>
+```

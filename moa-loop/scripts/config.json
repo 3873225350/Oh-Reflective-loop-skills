@@ -1,0 +1,60 @@
+{
+  "primary_agent": "gemini",
+  "enabled_agents": ["gemini", "claude", "qwen", "kimi", "cursor", "minimax"],
+  "max_parallel": 3,
+  "fallback_chain": ["gemini", "claude", "qwen", "kimi", "cursor", "minimax"],
+
+  "agent_capabilities": {
+    "gemini": {
+      "strengths": ["reasoning", "code", "fast"],
+      "max_context": 1000000,
+      "cost_tier": "medium",
+      "best_for": ["coding", "reasoning", "analysis"]
+    },
+    "claude": {
+      "strengths": ["analysis", "writing", "safety"],
+      "max_context": 200000,
+      "cost_tier": "high",
+      "best_for": ["writing", "review", "complex_analysis"]
+    },
+    "qwen": {
+      "strengths": ["coding", "math", "multilingual"],
+      "max_context": 131072,
+      "cost_tier": "low",
+      "best_for": ["coding", "math", "translation"]
+    },
+    "kimi": {
+      "strengths": ["long_context", "reading", "summarization"],
+      "max_context": 2000000,
+      "cost_tier": "medium",
+      "best_for": ["long_docs", "summarization", "research"]
+    },
+    "cursor": {
+      "strengths": ["ide_integration", "code_completion", "refactoring"],
+      "max_context": 100000,
+      "cost_tier": "medium",
+      "best_for": ["code_edit", "refactoring", "autocomplete"]
+    },
+    "minimax": {
+      "strengths": ["speed", "simple_tasks", "quick_response"],
+      "max_context": 10000,
+      "cost_tier": "low",
+      "best_for": ["quick_tasks", "simple_queries"]
+    }
+  },
+
+  "task_routing": {
+    "coding": ["gemini", "claude", "qwen", "cursor"],
+    "writing": ["claude", "gemini", "qwen"],
+    "analysis": ["claude", "gemini", "kimi"],
+    "research": ["kimi", "gemini", "claude"],
+    "quick": ["minimax", "qwen"],
+    "default": ["gemini", "claude"]
+  },
+
+  "retry_policy": {
+    "max_retries": 3,
+    "retry_delay": 5,
+    "escalate_on_failure": true
+  }
+}
