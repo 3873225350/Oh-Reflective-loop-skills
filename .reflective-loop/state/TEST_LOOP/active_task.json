@@ -1,0 +1,10 @@
+{
+  "plan_id": "moa-optimize",
+  "task_id": "T1",
+  "status": "pending",
+  "epoch": 0,
+  "architecture": "v2.0-DAG-Blackboard-PEFT",
+  "frozen_backbone": [],
+  "adapters": {},
+  "created_at": "2026-04-22T02:25:22.583Z"
+}
