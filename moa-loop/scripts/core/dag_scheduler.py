@@ -11,10 +11,12 @@ MOA Loop v2.0 - DAG Scheduler (横向DAG调度核心)
 
 import json
 import threading
+import concurrent.futures
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Callable, Any
 from datetime import datetime
 from pathlib import Path
+import fnmatch
 
 
 @dataclass
@@ -130,13 +132,8 @@ class DAGScheduler:
             Layer 2: [test, doc]                   ← 依赖 code，互相独立可并行
             Layer 3: [review]                      ← 依赖 test + doc
         """
-        in_degree = {nid: 0 for nid in self.dag.nodes}
-        for node in self.dag.nodes.values():
-            for dep in node.dependencies:
-                if dep in in_degree:
-                    in_degree[node.id] = in_degree.get(node.id, 0)
+        import concurrent.futures
 
-        # 重新计算正确的入度
         in_degree = {nid: 0 for nid in self.dag.nodes}
         for node in self.dag.nodes.values():
             for dep in node.dependencies:
@@ -273,8 +270,6 @@ class DAGScheduler:
         Returns:
             执行摘要 dict
         """
-        import concurrent.futures
-
         summary = {
             "started_at": datetime.now().isoformat(),
             "total": len(self.dag.nodes),

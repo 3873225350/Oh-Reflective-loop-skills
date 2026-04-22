@@ -12,7 +12,7 @@ MOA Loop v2.0 - Shared Blackboard (共享黑板)
 
 import json
 import threading
-import time
+import fnmatch
 from typing import Any, Dict, List, Optional, Callable
 from datetime import datetime
 from dataclasses import dataclass, field
@@ -142,7 +142,6 @@ class SharedBlackboard:
         with self._lock:
             keys = list(self._knowledge.keys())
             if pattern:
-                import fnmatch
                 keys = [k for k in keys if fnmatch.fnmatch(k, pattern)]
             return keys
 
@@ -279,7 +278,6 @@ class SharedBlackboard:
 
     def _notify_subscribers(self, key: str, entry: BlackboardEntry):
         """通知匹配的订阅者（在锁内调用）"""
-        import fnmatch
         for pattern, callbacks in self._subscribers.items():
             if fnmatch.fnmatch(key, pattern):
                 for cb in callbacks:

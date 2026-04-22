@@ -12,7 +12,6 @@ import sys
 import json
 import subprocess
 import time
-import re
 from datetime import datetime
 from pathlib import Path
 
@@ -193,10 +192,10 @@ def make_dag_executor(agent_executor: AgentExecutor,
                         "status": "reviewed",
                         "new_config": {"last_check": datetime.now().isoformat()},
                     },
-                    max_changes=iteration_mgr._epoch,
+                    max_changes=iteration_mgr.get_current_epoch(),
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                log(f"PEFT adapt error for {node.id}: {e}")
 
         # 写入黑板
         blackboard.write(agent_name, f"node_{node.id}_result", result[:1000],

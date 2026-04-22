@@ -15,7 +15,7 @@ import json
 import re
 import os
 import sqlite3
-import shutil
+import hashlib
 import threading
 from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime
@@ -553,7 +553,6 @@ class IterationManager:
     def _hash_dict(d: dict) -> str:
         """计算字典的简单hash"""
         content = json.dumps(d, sort_keys=True, ensure_ascii=False)
-        import hashlib
         return hashlib.md5(content.encode()).hexdigest()[:12]
 
     def show_status(self) -> str:
