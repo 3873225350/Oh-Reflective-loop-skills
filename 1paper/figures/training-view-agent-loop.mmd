@@ -1,0 +1,69 @@
+%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff", "fontFamily": "Arial", "primaryColor": "#ffffff", "primaryTextColor": "#111827", "lineColor": "#374151"}}}%%
+flowchart LR
+  subgraph DL["Deep Learning Training Loop"]
+    direction TB
+    W["Weights<br/><b>slow reusable state</b>"]
+    D["Training data<br/>task batch"]
+    F["Forward pass<br/>prediction"]
+    L["Loss<br/>error signal"]
+    G["Gradient<br/>update direction"]
+    O["Optimizer<br/>state update"]
+
+    W --> F
+    D --> F
+    F --> L
+    L --> G
+    G --> O
+    O --> W
+  end
+
+  subgraph MAP["Role Mapping"]
+    direction TB
+    M1["Weights<br/>↔<br/>Roadmap"]
+    M2["Loss<br/>↔<br/>Check"]
+    M3["Gradient<br/>↔<br/>Patch"]
+    M4["Optimizer state<br/>↔<br/>Adapter + memory"]
+  end
+
+  subgraph AG["Long-Horizon Reflective Agent Loop"]
+    direction TB
+    R["Reflective Roadmap<br/><b>project weights</b>"]
+    T["Long task<br/>bounded slice"]
+    A["Optimize<br/>agent rollout"]
+    C["Check<br/>verification loss"]
+    P["Local patch<br/>prompt / scope / test"]
+    S["active_task.json<br/>fast adapter"]
+    B["failure_bank.json<br/>error memory"]
+
+    R --> A
+    T --> A
+    A --> C
+    C --> P
+    P --> S
+    S --> R
+    P --> B
+    B --> S
+  end
+
+  W -.-> M1 -.-> R
+  L -.-> M2 -.-> C
+  G -.-> M3 -.-> P
+  O -.-> M4 -.-> S
+
+  classDef weight fill:#EEF2FF,stroke:#4F46E5,stroke-width:2px,color:#111827;
+  classDef data fill:#ECFDF5,stroke:#059669,stroke-width:1.6px,color:#111827;
+  classDef process fill:#EFF6FF,stroke:#2563EB,stroke-width:1.6px,color:#111827;
+  classDef signal fill:#FFF7ED,stroke:#EA580C,stroke-width:1.8px,color:#111827;
+  classDef memory fill:#F0FDF4,stroke:#16A34A,stroke-width:1.6px,color:#111827;
+  classDef mapping fill:#FFFFFF,stroke:#6B7280,stroke-width:1.5px,color:#111827;
+
+  class W,R weight;
+  class D,T data;
+  class F,A process;
+  class L,G,C,P signal;
+  class O,S,B memory;
+  class M1,M2,M3,M4 mapping;
+
+  style DL fill:#FFFFFF,stroke:#9CA3AF,stroke-width:1.5px;
+  style MAP fill:#FFFFFF,stroke:#D1D5DB,stroke-width:1.5px;
+  style AG fill:#FFFFFF,stroke:#9CA3AF,stroke-width:1.5px;

@@ -1,0 +1,93 @@
+%%%%%%%% ICML 2026 PREPRINT LATEX SUBMISSION FILE %%%%%%%%%%%%%%%%%
+
+\documentclass{article}
+
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{adjustbox}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage[capitalize,noabbrev]{cleveref}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit,calc}
+
+\usepackage[preprint]{icml2026}
+
+\newcommand{\ours}{\texttt{RLS}}
+\newcommand{\systemname}{\texttt{Reflective Loop Skills}}
+\newcommand{\roadmap}{\texttt{roadmap.md}}
+\newcommand{\activestate}{\texttt{active\_task.json}}
+\newcommand{\failurebank}{\texttt{failure\_bank.json}}
+\newcommand{\lastmode}{\texttt{last\_mode.txt}}
+
+\definecolor{rlblue}{RGB}{38,113,191}
+\definecolor{rlgreen}{RGB}{42,143,91}
+\definecolor{rlorange}{RGB}{219,132,45}
+\definecolor{rllight}{RGB}{246,248,252}
+
+\newcommand{\theHalgorithm}{\arabic{algorithm}}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{assumption}[theorem]{Assumption}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\icmltitlerunning{Reflective Roadmaps Are Weights}
+
+\begin{document}
+
+\twocolumn[
+\icmltitle{Reflective Roadmaps Are Weights: A Training View of Long-Horizon Agent Loops}
+
+\begin{icmlauthorlist}
+  \icmlauthor{Anonymous Authors}{anon}
+\end{icmlauthorlist}
+\icmlaffiliation{anon}{Anonymous Institution}
+\icmlcorrespondingauthor{Anonymous Authors}{anonymous@example.com}
+\icmlkeywords{LLM agents, coding agents, self-improvement, agent memory, multi-agent orchestration}
+\vskip 0.3in
+]
+
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+Long-horizon agents fail less like weak reasoners than like systems without durable training state: they forget the objective, repeat local repairs, and restart from brittle transcripts after every interruption. We argue that the missing object is the roadmap. In a persistent agent loop, the roadmap plays the role of weights: a slow, reusable carrier of task structure against which fast local adaptation should be performed. We formalize this view through \systemname{} (\ours), a non-parametric training loop for coding agents in which the roadmap is the backbone, \activestate{} is the adapter, check results are loss signals, local patches are update directions, and \failurebank{} is error memory. This framing turns ``looping'' from a scheduling trick into an optimization interface for long tasks. We instantiate the interface across seven CLI agents and extend it with \texttt{moa-loop}, where a single vertical loop becomes a mixture-of-agents computation graph with DAG scheduling and shared blackboard communication. We further separate trigger mechanisms---Stop hooks, external daemons, OS-level cron schedulers with differential health-check intervals, and application-level schedulers---from the persistent state contract they must preserve. The contribution is a training-centric architecture for agents that continue, correct, and accumulate work across epochs without updating neural weights.
+\end{abstract}
+
+\input{section/intro}
+\input{section/definition}
+\input{section/method}
+\input{section/experiment}
+\input{section/related_work}
+\input{section/conclusion}
+
+\section*{Impact Statement}
+This work aims to make long-running coding agents more transparent, reproducible, and recoverable. Persistent roadmaps and failure memories may reduce repeated computation and make agentic engineering easier to audit. The same persistence can also preserve stale assumptions or unsafe behaviors if the check phase is weak; therefore, \ours{} treats the roadmap and failure memory as inspected artifacts rather than hidden model state.
+
+\section*{Limitations}
+\ours{} is a systems pattern and repository implementation, not a trained model. The present paper reports lightweight structural validation rather than benchmark-scale task success rates. The phrase ``roadmaps as weights'' is a conceptual analogy for non-parametric state updates; it should not be read as gradient training of neural parameters. The current implementation also assumes file-system persistence and CLI agents, so hosted or stateless agent runtimes require adapters.
+
+\bibliography{references}
+\bibliographystyle{icml2026}
+
+\newpage
+\appendix
+\onecolumn
+\input{section/appendix}
+
+\end{document}

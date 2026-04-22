@@ -1,0 +1,39 @@
+\section{Preliminaries and Problem Formulation}
+\label{sec:definition}
+
+\paragraph{Coding-agent episodes.}
+Let $q$ denote a repository task and let an agent policy $\pi$ interact with a workspace through tool calls, shell commands, file edits, and tests. A one-shot agent produces a trajectory
+\begin{equation}
+\tau \sim \pi(\cdot \mid q),
+\end{equation}
+where $\tau$ contains observations, actions, tool outputs, and edits. For short tasks, a single trajectory may be enough. For long-horizon engineering, however, the desired object is not one trajectory but a sequence of recoverable epochs.
+
+\begin{definition}[Reflective loop state]
+A reflective loop state is a tuple
+\begin{equation}
+\mathcal{L}^{(k)} = \langle R, A^{(k)}, F^{(k)}, M^{(k)}, H^{(k)} \rangle,
+\end{equation}
+where $R$ is the roadmap, $A^{(k)}$ is the active task adapter, $F^{(k)}$ is the failure memory, $M^{(k)}$ records the current mode, and $H^{(k)}$ stores logs, snapshots, and handoff notes at epoch $k$.
+\end{definition}
+
+\paragraph{Slow and fast state.}
+The roadmap $R$ stores durable project intent: goals, constraints, milestones, and non-negotiable design choices. It is analogous to a frozen or slowly updated backbone. The active adapter $A^{(k)}$ is a structured JSON record for the current slice of work. It stores local patches, immediate verification requirements, and the next bounded target. This separation prevents two common failures: global plans being overwritten by local errors, and local fixes being lost inside a long transcript.
+
+\paragraph{Optimize/check epochs.}
+Each epoch contains two conceptual phases. The optimize phase performs bounded implementation conditioned on $(R,A^{(k)},F^{(k)})$. The check phase reviews the result, estimates the residual error, and emits patch signals:
+\begin{equation}
+P^{(k)} = C(\tau^{(k)}, R, A^{(k)}, F^{(k)}),
+\end{equation}
+where $P^{(k)}$ may include prompt patches, scope patches, verification patches, and new failure patterns. The next state is updated externally:
+\begin{equation}
+A^{(k+1)}, F^{(k+1)}, H^{(k+1)} = U(A^{(k)}, F^{(k)}, H^{(k)}, P^{(k)}).
+\end{equation}
+This update is non-parametric: it changes files and structured state, not model weights.
+
+\paragraph{Objective.}
+Let $S(\tau,q)$ be a task success indicator and let $B(\tau)$ measure engineering cost, such as repeated failed attempts or redundant context reconstruction. \ours{} aims to improve long-horizon execution by increasing expected success while reducing repeated work:
+\begin{equation}
+\max_{\mathcal{L}} \; \mathbb{E}_{q}\left[S(\tau,q) - \lambda B(\tau)\right],
+\end{equation}
+subject to auditability: every epoch should leave enough state for a later agent or human to resume the project without relying on hidden context.
+

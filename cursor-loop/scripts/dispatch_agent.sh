@@ -3,14 +3,14 @@
 # Cursor Loop Dispatcher (Standalone - No Shared Templates)
 #================================================================
 
-SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MODE="${1:-}"
 LOOP_NAME="${2:-DEFAULT_CURSOR_ROADMAP}"
 WORKSPACE="${WORKSPACE:-$(pwd)}"
 
 export WORKSPACE LOOP_NAME MODE
 
-STATE_DIR="${WORKSPACE}/.reflective-loop/state/${LOOP_NAME}"
+STATE_DIR="${WORKSPACE}/.cursor-loop/state/${LOOP_NAME}"
 LOG_DIR="${STATE_DIR}/dispatch_logs"
 mkdir -p "${STATE_DIR}" "${LOG_DIR}"
 
@@ -22,6 +22,10 @@ log_dispatch() {
     echo "[${timestamp}] [PROVIDER:cursor] $1" | tee -a "${dispatch_log}"
 }
 
+#================================================================
+# Reflective Loop Prompt Builder
+#================================================================
+
 build_prompt() {
     local mode="$1"
     local role
@@ -30,23 +34,50 @@ build_prompt() {
         check)    role="checker" ;;
     esac
 
-    cat <<EOF
+    if [[ "$mode" == "optimize" ]]; then
+        cat <<EOF
 You are the AgentHUD ${role} agent for Cursor.
 Workspace: ${WORKSPACE}
-Task: Follow .reflective-loop/state/${LOOP_NAME}/${LOOP_NAME}.md and update .reflective-loop/state/${LOOP_NAME}/sub-tasks/*.json.
+
+BEFORE Optimize:
+1. Read .cursor-loop/state/${LOOP_NAME}/failure_bank.json to avoid past errors.
+2. Apply local_patches from .cursor-loop/state/${LOOP_NAME}/active_task.json.
+
+Task: Follow .cursor-loop/state/${LOOP_NAME}/${LOOP_NAME}.md and update .cursor-loop/state/${LOOP_NAME}/sub-tasks/*.json.
 
 CRITICAL INSTRUCTIONS:
 1. Complete precisely one verifiable slice of work.
 2. MANDATORY: git add and git commit your changes before finishing.
-3. Update .reflective-loop/state/${LOOP_NAME}/${LOOP_NAME}.md with the latest status.
+3. Update .cursor-loop/state/${LOOP_NAME}/${LOOP_NAME}.md with the latest status.
 EOF
+    else
+        cat <<EOF
+You are the AgentHUD ${role} agent for Cursor.
+Workspace: ${WORKSPACE}
+
+DURING Check:
+If the task isn't perfect, write a specific local_patch into active_task.json.
+Compute the "loss" between target and actual state.
+
+Task: Inspect recent changes and update .cursor-loop/state/${LOOP_NAME}/${LOOP_NAME}.md.
+
+CRITICAL INSTRUCTIONS:
+1. Review implementation for alignment with the roadmap.
+2. Provide a 'Local Patch' in active_task.json if corrections are needed:
+   - prompt_patch: Behavioral hints for next optimize pass.
+   - scope_patch: Adjust editing radius.
+   - verification_patch: Extra validation steps.
+3. If task passes, clear local_patches and mark task complete.
+EOF
+    fi
 }
 
 invoke_agent() {
     local model="$1"
     local prompt_file="$2"
 
-    cursor "$(cat "${prompt_file}")"
+    cursor "$(cat "${prompt_file}")" 2>&1 | tee -a "${dispatch_log}"
+    return ${PIPESTATUS[0]}
 }
 
 get_models() {
@@ -67,11 +98,13 @@ main() {
     local success=false
     for model in $(get_models); do
         log_dispatch "Trying model: ${model}"
-        if invoke_agent "${model}" "${prompt_file}" 2>&1 | tee -a "${dispatch_log}"; then
+        if invoke_agent "${model}" "${prompt_file}"; then
             success=true
+            log_dispatch "Model ${model} succeeded"
             break
         else
-            log_dispatch "Model ${model} failed, trying next..."
+            local exit_code=$?
+            log_dispatch "Model ${model} failed (exit=${exit_code}), trying next..."
         fi
     done
 

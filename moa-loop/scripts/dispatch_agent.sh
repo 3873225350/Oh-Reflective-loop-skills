@@ -15,7 +15,7 @@ CONFIG_FILE="${SCRIPT_DIR}/config.json"
 
 export WORKSPACE LOOP_NAME MODE
 
-STATE_DIR="${WORKSPACE}/.reflective-loop/state/${LOOP_NAME}"
+STATE_DIR="${WORKSPACE}/.moa-loop/state/${LOOP_NAME}"
 LOG_DIR="${STATE_DIR}/dispatch_logs"
 mkdir -p "${STATE_DIR}" "${LOG_DIR}" "${STATE_DIR}/iterations"
 
@@ -104,6 +104,67 @@ mgr = IterationManager('${STATE_DIR}/iterations', '${LOOP_NAME}')
 print(mgr.show_status())
 " 2>&1 | tee -a "${dispatch_log}"
 
-# 5. Execute via DAG-driven daemon
+# 5. Execute DAG-driven dispatch via v2 daemon
 log_dispatch "Launching DAG-driven execution (mode: ${MODE})..."
-log_dispatch "══════════ Dispatch Complete ══════════"
+
+python3 -c "
+import sys, json, os
+sys.path.insert(0, '${SCRIPT_DIR}')
+from core.dag_scheduler import DAGScheduler, DAG
+from core.shared_blackboard import SharedBlackboard
+from core.iteration_manager import IterationManager
+
+state_dir = '${STATE_DIR}'
+config = json.load(open('${CONFIG_FILE}'))
+loop_name = '${LOOP_NAME}'
+workspace = '${WORKSPACE}'
+mode = '${MODE}'
+
+# Initialize core modules
+bb = SharedBlackboard(persist_path=f'{state_dir}/blackboard.json')
+iter_mgr = IterationManager(f'{state_dir}/iterations', loop_name)
+
+# Build DAG
+dag_config = config.get('dag', {'nodes': [{'id': 'main', 'type': 'default', 'deps': []}]})
+dag = DAG.from_config(dag_config)
+scheduler = DAGScheduler(dag)
+
+if scheduler.detect_cycle():
+    print('ERROR: DAG has cycle, aborting')
+    sys.exit(1)
+
+# Show plan
+print(scheduler.visualize_ascii())
+
+# Execute each layer
+agents = '${AGENTS[*]}'.split()
+primary = config.get('primary_agent', agents[0] if agents else 'gemini')
+
+def execute_node(node):
+    agent = primary
+    if node.agent:
+        agent = node.agent
+    bb.set_agent_task(agent, node.id)
+    bb._maybe_persist()
+    scheduler.mark_running(node.id)
+    print(f'  START: {node.id} via {agent} (type={node.task_type})')
+    # Node execution is delegated to the v2 daemon loop
+    scheduler.mark_done(node.id, f'Dispatched to {agent}')
+    bb.set_agent_idle(agent)
+    bb._maybe_persist()
+    return f'OK: {node.id}'
+
+max_parallel = config.get('max_parallel', 3)
+summary = scheduler.execute(executor=execute_node, max_parallel=max_parallel)
+
+# Persist state
+iter_mgr.new_epoch(mode)
+iter_mgr.snapshot()
+bb._maybe_persist()
+
+progress = scheduler.get_progress()
+print(f'Epoch Complete: {progress[\"done\"]}/{progress[\"total\"]} ({progress[\"progress_pct\"]}%)')
+print(f'Succeeded: {summary[\"succeeded\"]}, Failed: {summary[\"failed\"]}')
+" 2>&1 | tee -a "${dispatch_log}"
+
+log_success "══════════ Dispatch Complete ══════════"

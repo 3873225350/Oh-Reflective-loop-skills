@@ -17,8 +17,7 @@ The loop treats task completion as an **iterative optimization problem**:
 
 ### 1. Link the Skill
 ```bash
-# Link minimax-loop to your MiniMax CLI
-ln -s $(pwd)/minimax-loop ~/.claude/skills/minimax-loop
+mmx skills link $(pwd)/minimax-loop
 ```
 
 ### 2. Initialize Loop
@@ -26,18 +25,45 @@ ln -s $(pwd)/minimax-loop ~/.claude/skills/minimax-loop
 node minimax-loop/scripts/init_minimax_loop.cjs <LOOP_NAME>
 ```
 
-### 3. Run Daemon
+### 3. Start Daemon
 ```bash
-bash minimax-loop/scripts/run_daemon.sh <LOOP_NAME>
+bash minimax-loop/scripts/start_minimax_loop.sh <LOOP_NAME>
+```
+
+## Daemon Management
+
+| Command | Script | Purpose |
+|---------|--------|---------|
+| Start | `bash minimax-loop/scripts/start_minimax_loop.sh <LOOP_NAME>` | Start in tmux/nohup |
+| Stop | `bash minimax-loop/scripts/stop_minimax_loop.sh <LOOP_NAME>` | Graceful stop (SIGTERM → SIGKILL) |
+| Status | `bash minimax-loop/scripts/status_minimax_loop.sh <LOOP_NAME>` | Check PID health + last mode |
+| Cron | `bash minimax-loop/scripts/print_cron_entry.sh` | Print cron entries for supervision |
+
+### Cron Health Check
+
+MiniMax-loop uses a **5-minute** health check interval (lightweight agent, fast patrol):
+
+```bash
+bash minimax-loop/scripts/print_cron_entry.sh | crontab -
 ```
 
 ## State Files
 
-| File | Purpose |
-|------|---------|
-| `roadmap.md` | Global plan (Pretrained Backbone) |
-| `active_task.json` | Local execution state (Fast Adapter) |
-| `failure_bank.json` | Error history (Reusable Memory) |
-| `last_mode.txt` | Current mode (optimize/check) |
+| File | Metaphor | Purpose |
+|------|----------|---------|
+| `<LOOP_NAME>.md` | Pretrained Backbone | Global roadmap, slow-moving |
+| `active_task.json` | PEFT/LoRA Adapter | Fast execution state with local patches |
+| `failure_bank.json` | Failure Memory | Registry of past errors |
+| `last_mode.txt` | Mode State | Tracks optimize/check alternation |
 
-*Built with ❤️ by the AgentHUD Team using MiniMax-Reflective-Loop.*
+## Environment Variables
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `MINIMAX_LOOP_WORKSPACE` | `$PWD` | Working directory |
+| `MINIMAX_LOOP_STATE_DIR` | `.minimax-loop/state` | State directory |
+| `MINIMAX_LOOP_LOOP_NAME` | `OPTIMIZE_ROADMAP` | Loop instance name |
+| `MINIMAX_LOOP_INTERVAL` | `60` | Tick interval (seconds) |
+| `MINIMAX_LOOP_LAUNCHER` | `auto` | `tmux`, `nohup`, or `auto` |
+
+*Built by the AgentHUD Team using MiniMax-Reflective-Loop.*

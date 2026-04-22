@@ -4,9 +4,9 @@ const path = require('path');
 async function run() {
   const workspace = process.cwd();
   const loopName = process.argv[2] || 'DEFAULT_ROADMAP';
-  console.log(`[Gemini-Loop] Initializing Reflective Loop environment in: ${workspace} for loop: ${loopName}`);
+  console.log(`[Claude-Loop] Initializing Reflective Loop environment in: ${workspace} for loop: ${loopName}`);
 
-  const stateDir = path.join(workspace, '.gemini-loop', 'state', loopName);
+  const stateDir = path.join(workspace, '.claude-loop', 'state', loopName);
   const taskDir = path.join(stateDir, 'sub-tasks');
 
   // 1. Create directory structure
@@ -17,7 +17,7 @@ async function run() {
   // 2. Create Initial Roadmap
   const roadmapPath = path.join(stateDir, `${loopName}.md`);
   if (!fs.existsSync(roadmapPath)) {
-    fs.writeFileSync(roadmapPath, `# AgentHUD Integration Roadmap (${loopName})
+    fs.writeFileSync(roadmapPath, `# Claude-Loop Integration Roadmap (${loopName})
 
 **Plan ID**: \`${loopName}-${Date.now()}\`
 **Status**: \`M1: Initializing\`
@@ -34,17 +34,38 @@ async function run() {
     fs.writeFileSync(failureBankPath, JSON.stringify({ schema_version: 1, failures: [] }, null, 2));
   }
 
-  // 4. Create Active Task Adapter
+  // 4. Create Active Task Adapter (PEFT/LoRA metaphor)
   const activeTaskPath = path.join(stateDir, 'active_task.json');
   if (!fs.existsSync(activeTaskPath)) {
     fs.writeFileSync(activeTaskPath, JSON.stringify({
       active_task_id: "INIT-001",
       status: "planned",
-      local_patches: []
+      local_patches: [],
+      scope_patch: null,
+      prompt_patch: null,
+      verification_patch: null
     }, null, 2));
   }
 
-  console.log(`[Gemini-Loop] Done. You can now start the daemon: bash .gemini-loop/scripts/run_daemon.sh ${loopName}`);
+  // 5. Create last_mode.txt (optimize/check alternation)
+  const lastModePath = path.join(stateDir, 'last_mode.txt');
+  if (!fs.existsSync(lastModePath)) {
+    fs.writeFileSync(lastModePath, 'check');
+  }
+
+  // 6. Create prompt.md if not exists at workspace level
+  const promptPath = path.join(workspace, '.claude-loop', 'prompt.md');
+  if (!fs.existsSync(promptPath)) {
+    fs.writeFileSync(promptPath, `You are the Claude Loop Scheduler (Reflective Edition).
+
+Your goal is to apply "Backward Signal" logic to refine implementation:
+1. BEFORE Optimize: Read \`failure_bank.json\` to avoid past errors and apply \`local_patches\` from \`active_task.json\`.
+2. DURING Check: If the task isn't perfect, do not just fail it. Write a specific \`local_patch\` (prompt or scope) into \`active_task.json\`.
+3. AFTER Success: Clear \`local_patches\` and move to the next roadmap item.
+`);
+  }
+
+  console.log(`[Claude-Loop] Done. You can now start the daemon: bash .claude-loop/scripts/run_daemon.sh ${loopName}`);
 }
 
 run().catch(console.error);

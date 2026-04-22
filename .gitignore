@@ -1,2 +1,14 @@
 scripts/__pycache__/
 *.pyc
+references/*
+.reflective-loop/state/*/*.json
+.reflective-loop/state/*/iterations/
+.reflective-loop/state/*/logs/
+.reflective-loop/state/*/dispatch_logs/
+.claude/
+.gh-config-sai/
+*.aux
+*.log
+*.bbl
+*.blg
+*.synctex.gz

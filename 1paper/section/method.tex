@@ -1,0 +1,136 @@
+\section{\ours{} Design}
+\label{sec:method}
+
+\subsection{Long Tasks First}
+\ours{} starts from a practical observation: the hard part of autonomous coding is not one patch, but continuity across many patches. A long task needs a stable objective, bounded local work, periodic checking, and a way to resume after the model, process, or human session stops. We therefore treat the loop as the primary unit of design. The CLI call is only one forward pass inside a larger training-like procedure.
+
+\subsection{Unified Loop Skill Interface}
+\ours{} packages the same long-task loop abstraction for seven agent CLIs plus one multi-agent orchestrator. Each skill directory contains a human-readable \texttt{SKILL.md}, a default prompt, an initialization script, a daemon runner, and state files. The CLI-specific layer handles dispatch and model invocation; the loop semantics remain shared. This design makes the loop portable: Codex, Gemini, Claude, Qwen, Kimi, MiniMax, and Cursor can use different command interfaces while preserving the same state machine.
+
+\begin{table*}[t]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lllll}
+\toprule
+Skill & CLI target & State directory & Initializer & Core persistent state \\
+\midrule
+\texttt{codex-loop} & \texttt{codex} & \texttt{.codex-loop/state} & \texttt{init\_codex\_loop.cjs} & roadmap, \activestate{}, \failurebank{}, \lastmode{} \\
+\texttt{gemini-loop} & \texttt{gemini} & \texttt{.gemini-loop/state} & \texttt{init\_gemini\_loop.cjs} & roadmap, \activestate{}, \failurebank{}, \lastmode{} \\
+\texttt{claude-loop} & \texttt{claude} & \texttt{.claude-loop/state} & \texttt{init\_claude\_loop.cjs} & roadmap, \activestate{}, \failurebank{}, \lastmode{} \\
+\texttt{qwen-loop} & \texttt{qwen} & \texttt{.qwen-loop/state} & \texttt{init\_qwen\_loop.cjs} & roadmap, \activestate{}, \failurebank{}, \lastmode{} \\
+\texttt{kimi-loop} & \texttt{kimi} & \texttt{.kimi-loop/state} & \texttt{init\_kimi\_loop.cjs} & roadmap, \activestate{}, \failurebank{}, \lastmode{} \\
+\texttt{minimax-loop} & \texttt{mmx} & \texttt{.minimax-loop/state} & \texttt{init\_minimax\_loop.cjs} & roadmap, \activestate{}, \failurebank{}, \lastmode{} \\
+\texttt{cursor-loop} & \texttt{cursor} & \texttt{.cursor-loop/state} & \texttt{init\_cursor\_loop.cjs} & roadmap, \activestate{}, \failurebank{}, \lastmode{} \\
+\texttt{moa-loop} & multi-agent & \texttt{.moa-loop/state} & \texttt{init\_moa\_loop.cjs} & roadmap, blackboard, DAG, iterations \\
+\bottomrule
+\end{tabular}}
+\caption{The eight loop skills share the same persistent state abstraction while adapting to different agent CLIs. \texttt{moa-loop} extends the interface with DAG scheduling and shared blackboard.}
+\label{tab:skills}
+\end{table*}
+
+\subsection{Roadmaps as Weights}
+
+The central design choice is to make the deep-learning metaphor operational. \Cref{tab:mapping} summarizes the mapping. The roadmap is not a prompt fragment; it is the durable backbone of the project. In practice, we found that roadmap quality dominates long-task stability in the same way that pretrained weights dominate downstream adaptation. \activestate{} is not a log; it is the fast local adapter that captures the current slice. The check phase is not merely a reviewer; it computes backward signals that update the next optimize phase. \failurebank{} is not a transcript archive; it is an abstracted memory of error patterns and mitigations.
+
+\begin{table}[t]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{ll}
+\toprule
+ML concept & \ours{} component \\
+\midrule
+Pretrained backbone & Roadmap / global plan \\
+PEFT or LoRA adapter & \activestate{} local state \\
+Forward pass & Optimize phase \\
+Loss signal & Check phase findings \\
+Backpropagation signal & Local patches \\
+Training epoch & One optimize/check cycle \\
+Checkpoint & Snapshot and handoff logs \\
+Catastrophic forgetting control & \failurebank{} \\
+\bottomrule
+\end{tabular}}
+\caption{The deep-learning analogy used by \ours{} is non-parametric: all updates are external state updates.}
+\label{tab:mapping}
+\end{table}
+
+\subsection{Vertical Iteration}
+
+The vertical loop is intentionally serial. At epoch $k$, the agent reads the roadmap, failure bank, and active adapter; performs one bounded optimize pass; runs or records verification; then enters a check pass. The check pass writes structured local patches and updates failure memory. Epoch $k+1$ begins only after the previous state has been persisted. This ordering trades some latency for correctness: project state remains traceable, interruptions are recoverable, and a later agent can inspect why a decision was made.
+
+\begin{algorithm}[t]
+\caption{\ours{} vertical epoch}
+\label{alg:epoch}
+\begin{algorithmic}[1]
+\STATE Read roadmap $R$, adapter $A^{(k)}$, and failure bank $F^{(k)}$
+\STATE Select one bounded target from $A^{(k)}$
+\STATE Run optimize pass and record trajectory $\tau^{(k)}$
+\STATE Run check pass against $R$, target, and verification evidence
+\STATE Emit local patches $P^{(k)}$
+\STATE Persist updated adapter, failure bank, mode, logs, and handoff
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Loop Trigger Boundaries}
+
+Different systems implement ``loop'' at different trigger boundaries. Claude/Ralph-style loops intercept the runtime stop point: a Stop hook can return a blocking decision and refeed a reason into the next model step. Codex-style loops use external time: a shell or Python daemon sleeps, wakes, and resumes the same thread through \texttt{codex exec resume}. LikeCode-style \texttt{/loop} behaves like cron at the user level, but it is not Linux \texttt{crontab}; it is an application-level scheduler that creates tasks and later enqueues prompts inside the running app. \ours{} abstracts over these mechanisms by requiring every trigger to produce the same epoch contract: read roadmap, run a bounded slice, check, persist patches, and prepare the next epoch.
+
+\begin{table*}[t]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llll}
+\toprule
+Mechanism & Trigger boundary & Continuation method & State implication \\
+\midrule
+Claude/Ralph Hook & Runtime \texttt{Stop} event & Block stop and refeed reason & Strong lifecycle control, runtime-specific \\
+Codex external daemon & External \texttt{while}/sleep tick & Resume same thread with prompt & Portable, process-managed state and logs \\
+LikeCode \texttt{/loop} & Application-level cron scheduler & Enqueue scheduled prompt & User-friendly task registry, app-managed timing \\
+OS-level cron & System scheduler (\texttt{crontab}) & Health-check and restart daemon & Machine-level supervision, reboots, crash recovery \\
+\ours{} contract & Persistent epoch boundary & Optimize/check with roadmap state & Trigger-agnostic long-task optimization \\
+\bottomrule
+\end{tabular}}
+\caption{Loop mechanisms differ in where they trigger continuation. \ours{} focuses on the state contract that should survive any trigger boundary.}
+\label{tab:loop_triggers}
+\end{table*}
+
+\subsection{\texttt{moa-loop}: From One Loop to a Computation Graph}
+
+The repository also includes \texttt{moa-loop}, and it should be part of the paper because it answers the scaling question: what happens after a single long-task loop becomes multiple cooperating agents? We treat \texttt{moa-loop} as the multi-agent generalization of \ours{}, not as an eighth CLI wrapper. In this view, the roadmap remains the frozen backbone, subtask adapters act like PEFT-style local updates, the optimize/check cycle remains the training epoch, and the DAG becomes the computation graph.
+
+Concretely, independent nodes such as research, documentation, and tests may run in parallel, while dependent nodes remain serial. A centralized shared blackboard stores horizontal working state, avoiding point-to-point message storms. The key rule is separation of concerns: horizontal coordination optimizes latency inside an epoch, while vertical persistence preserves ordered project evolution across epochs. Thus \texttt{moa-loop} is the bridge from persistent single-agent loops to mixture-of-agents training dynamics.
+
+\subsection{Two-Layer Communication}
+
+The communication design follows the reference architecture in \texttt{references/ref1.txt}. Horizontal communication favors a shared blackboard for low-latency multi-agent coordination. Vertical communication favors structured persistence: Markdown for human-readable intent, JSON for compact active state, and SQL or file-backed logs for durable indexing and replay. The two layers should not replace each other. Shared memory is fast but ephemeral; persistent JSON and logs are slower but auditable and resumable.
+
+\subsection{Daemon Management and Health Supervision}
+
+Every loop skill ships a unified daemon management interface. Four scripts---\texttt{start}, \texttt{stop}, \texttt{status}, and \texttt{print\_cron\_entry}---provide OS-level process supervision independent of the agent CLI. The start script launches the daemon in a detached tmux session or nohup background process, writes a PID file for health checks, and refuses to start a second instance. The stop script sends SIGTERM, waits for graceful shutdown, and falls back to SIGKILL if the process does not exit within five seconds. The status script reads the PID file, checks whether the process is alive, and reports the current mode plus recent log activity.
+
+The \texttt{print\_cron\_entry} script generates ready-to-use crontab entries: an \texttt{@reboot} rule for auto-starting after machine restart, and a periodic health-check rule that runs the status script and triggers a restart on failure. Each skill uses a health-check interval tuned to its workload characteristics, summarized in \cref{tab:cron}.
+
+\begin{table}[t]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcl}
+\toprule
+Skill & Interval & Rationale \\
+\midrule
+\texttt{gemini-loop} & \texttt{*/5}  & Fast iteration, reference agent \\
+\texttt{codex-loop}  & \texttt{*/10} & Balanced, production-stable \\
+\texttt{claude-loop} & \texttt{*/10} & Production-grade stability \\
+\texttt{cursor-loop} & \texttt{*/15} & IDE integration, lower frequency \\
+\texttt{kimi-loop}   & \texttt{*/15} & Long-context tasks, wider interval \\
+\texttt{minimax-loop}& \texttt{*/5}  & Lightweight, fast patrol \\
+\texttt{qwen-loop}   & \texttt{*/10} & Balanced strategy \\
+\texttt{moa-loop}    & \texttt{*/5}  & Multi-agent, frequent checks \\
+\bottomrule
+\end{tabular}}
+\caption{Differential cron health-check intervals. Faster intervals target lightweight or multi-agent skills; slower intervals suit IDE-integrated or long-context skills.}
+\label{tab:cron}
+\end{table}
+
+This separation of concerns means that the loop optimization logic inside each skill remains independent of how the process is supervised. A developer can run the daemon manually, under tmux, via cron, or under systemd, and the epoch contract remains the same.

@@ -6,7 +6,7 @@ import re
 from datetime import datetime
 
 # --- Configuration (Relative to Workspace) ---
-STATE_DIR = ".reflective-loop/state"
+STATE_DIR = ".kimi-loop/state"
 # LOG_DIR and ACTIVE_LOG_LINK are set per-loop in setup_environment()
 ROADMAP_FILE = "ROADMAP.md"
 DISPATCH_SCRIPT_NAME = "dispatch_agent.sh"
@@ -50,6 +50,7 @@ def setup_environment():
     loop_state_dir = os.path.join(STATE_DIR, loop_name)
     LOG_DIR = os.path.join(loop_state_dir, "logs")
     ACTIVE_LOG_LINK = os.path.join(loop_state_dir, "active.log")
+    PID_FILE = os.path.join(loop_state_dir, "daemon.pid")
 
     if not os.path.exists(LOG_DIR):
         os.makedirs(LOG_DIR)
@@ -58,6 +59,10 @@ def setup_environment():
     pid = os.getpid()
     start_time = datetime.now().strftime("%Y%m%d-%H%M%S")
     instance_log = os.path.join(LOG_DIR, f"loop-{plan_id}-PID{pid}-{start_time}.log")
+
+    # Write PID file for health checks
+    with open(PID_FILE, "w") as f:
+        f.write(str(pid))
 
     if os.path.exists(ACTIVE_LOG_LINK):
         if os.path.islink(ACTIVE_LOG_LINK) or os.path.isfile(ACTIVE_LOG_LINK):
@@ -87,7 +92,7 @@ def run():
     loop_name = os.environ.get("LOOP_NAME", "OPTIMIZE_ROADMAP")
 
     log("╔════════════════════════════════════════════════════════════════", plan_id, pid, instance_log)
-    log("║ SESSION START: Gemini Loop Orchestrator (Supervised)", plan_id, pid, instance_log)
+    log("║ SESSION START: Kimi Loop Orchestrator (Supervised + Reflective)", plan_id, pid, instance_log)
     log(f"║ Plan ID: {plan_id}", plan_id, pid, instance_log)
     log(f"║ Log File: {instance_log}", plan_id, pid, instance_log)
     log("╚════════════════════════════════════════════════════════════════", plan_id, pid, instance_log)

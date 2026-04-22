@@ -1,0 +1,92 @@
+\section{Appendix}
+
+\subsection{Repository Layout}
+
+Each primary loop skill follows the same layout:
+\begin{verbatim}
+<name>-loop/
+  README.md
+  SKILL.md
+  prompt.md
+  scripts/
+    init_<name>_loop.cjs
+    run_daemon.py
+    run_daemon.sh
+    start_<name>_loop.sh
+    stop_<name>_loop.sh
+    status_<name>_loop.sh
+    print_cron_entry.sh
+\end{verbatim}
+
+\subsection{Example Active Task Schema}
+
+\begin{verbatim}
+{
+  "plan_id": "PROJECT_ROADMAP",
+  "mode": "optimize",
+  "bounded_target": "complete one verifiable slice",
+  "prompt_patch": [],
+  "scope_patch": [],
+  "verification_patch": [],
+  "handoff": "next smallest useful action"
+}
+\end{verbatim}
+
+\subsection{Example Failure Memory Entry}
+
+\begin{verbatim}
+{
+  "failure_type": "verification_gap",
+  "symptom": "implementation completed without running target tests",
+  "patch": "before final handoff, run the smallest relevant check",
+  "seen_in": ["epoch-004", "epoch-009"]
+}
+\end{verbatim}
+
+\subsection{Daemon Management Commands}
+
+All loop skills share the same management interface:
+
+\begin{verbatim}
+# Initialize state
+node <skill>-loop/scripts/init_<name>_loop.cjs MY_ROADMAP
+
+# Start daemon (tmux/nohup auto-select)
+bash <skill>-loop/scripts/start_<name>_loop.sh MY_ROADMAP
+
+# Check status (PID health + last mode)
+bash <skill>-loop/scripts/status_<name>_loop.sh MY_ROADMAP
+
+# Stop daemon gracefully (SIGTERM -> SIGKILL)
+bash <skill>-loop/scripts/stop_<name>_loop.sh MY_ROADMAP
+
+# Print cron entries for OS-level supervision
+bash <skill>-loop/scripts/print_cron_entry.sh
+\end{verbatim}
+
+\subsection{Cron Integration Example}
+
+The following crontab entries provide automatic restart after reboot and periodic health checks:
+\begin{verbatim}
+# Auto-start after reboot
+@reboot cd /workspace && <SKILL>_LOOP_WORKSPACE=/workspace \
+  bash /path/to/start_<name>_loop.sh
+
+# Health check every N minutes (restart on failure)
+*/N * * * * cd /workspace && \
+  bash /path/to/status_<name>_loop.sh \
+  || bash /path/to/start_<name>_loop.sh
+\end{verbatim}
+
+\subsection{Implementation Notes}
+
+The Codex and MOA loops include additional monitoring commands:
+\begin{verbatim}
+# Codex: real-time monitoring dashboard
+bash codex-loop/scripts/monitor_codex_loop.sh --watch
+
+# MOA: DAG + Blackboard + PEFT dashboard
+bash moa-loop/scripts/monitor_moa_loop.sh --watch
+\end{verbatim}
+
+The MOA loop extends the abstraction with \texttt{dag\_scheduler.py}, \texttt{shared\_blackboard.py}, and \texttt{iteration\_manager.py}. These modules implement horizontal DAG scheduling, centralized agent communication, and epoch-level PEFT adaptation tracking.

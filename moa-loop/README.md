@@ -1,5 +1,7 @@
 # MOA Loop v2.0 (Mixture of Agents)
 
+![AgentHUD Banner](https://raw.githubusercontent.com/Harzva/agent-hud/main/media/agenthud.svg)
+
 An intelligent orchestration loop built on **ML training paradigm**: Roadmap as pretrained weights (frozen), experiments as PEFT/Adapter fine-tuning, DAG as computation graph.
 
 ---
@@ -31,18 +33,50 @@ Epoch N:                            Layer 0: [research]        ← PARALLEL
 
 ```bash
 # Initialize
-node moa-loop/scripts/init_moa_loop.cjs MY_PROJECT
+node moa-loop/scripts/init_moa_loop.cjs <LOOP_NAME>
 
 # Start daemon
-bash moa-loop/scripts/run_daemon.sh MY_PROJECT
+bash moa-loop/scripts/start_moa_loop.sh <LOOP_NAME>
+```
+
+## Daemon Management
+
+| Command | Script | Purpose |
+|---------|--------|---------|
+| Start | `bash moa-loop/scripts/start_moa_loop.sh <LOOP_NAME>` | Start in tmux/nohup |
+| Stop | `bash moa-loop/scripts/stop_moa_loop.sh <LOOP_NAME>` | Graceful stop (SIGTERM → SIGKILL) |
+| Status | `bash moa-loop/scripts/status_moa_loop.sh <LOOP_NAME>` | PID + Blackboard + mode |
+| Monitor | `bash moa-loop/scripts/monitor_moa_loop.sh [--watch]` | DAG + Blackboard + PEFT dashboard |
+| Cron | `bash moa-loop/scripts/print_cron_entry.sh` | Print cron entries for supervision |
+
+### Monitor Mode
+
+The MOA monitor provides a specialized dashboard showing DAG execution plan, Blackboard state, iteration progress, and active task:
+
+```bash
+# One-time snapshot
+bash moa-loop/scripts/monitor_moa_loop.sh
+
+# Continuous watch (refresh every 5s)
+bash moa-loop/scripts/monitor_moa_loop.sh --watch
+```
+
+### Cron Health Check
+
+MOA-loop uses a **5-minute** health check interval (multi-agent orchestration, frequent checks):
+
+```bash
+bash moa-loop/scripts/print_cron_entry.sh | crontab -
 ```
 
 ## Modules
 
-- `core/dag_scheduler.py` — DAG scheduling with topological sort
-- `core/shared_blackboard.py` — Centralized agent communication
-- `core/iteration_manager.py` — Epoch management + PEFT adaptation
-- `run_daemon_v2.py` — Main loop orchestrator
+| Module | Purpose |
+|--------|---------|
+| `core/dag_scheduler.py` | DAG scheduling with topological sort |
+| `core/shared_blackboard.py` | Centralized agent communication |
+| `core/iteration_manager.py` | Epoch management + PEFT adaptation |
+| `run_daemon.py` | Main loop orchestrator |
 
 ## DAG Example
 
@@ -51,28 +85,19 @@ research ──→ code ──┬──→ test  ──┬──→ review
                     └──→ doc   ──┘
 ```
 
-- Layer 0: `research` (no deps → parallel)
-- Layer 1: `code` (depends on research → serial)
-- Layer 2: `test`, `doc` (both depend on code → parallel)
-- Layer 3: `review` (depends on test + doc → serial)
-
-## PEFT Fine-Tuning
-
-```
-Roadmap Backbone (FROZEN = pretrained weights)
-├── T1: Core task A  ← cannot modify
-├── T2: Core task B  ← cannot modify
-└── T3: Core task C  ← cannot modify
-
-Sub-task Adapters (TRAINABLE = PEFT)
-├── A1: Adapt based on experiment results
-├── A2: Local plan adjustments only
-└── A3: Task-specific lightweight adaptation
-```
-
 ## Communication Layers
 
 - **Horizontal** (real-time): Shared Blackboard — O(1) channels for N agents
 - **Vertical** (persistent): JSON + SQLite — versioned, auditable, recoverable
 
-*Built with AgentHUD MoA Architecture v2.0*
+## Environment Variables
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `MOA_LOOP_WORKSPACE` | `$PWD` | Working directory |
+| `MOA_LOOP_STATE_DIR` | `.moa-loop/state` | State directory |
+| `MOA_LOOP_LOOP_NAME` | `OPTIMIZE_ROADMAP` | Loop instance name |
+| `MOA_LOOP_INTERVAL` | `60` | Tick interval (seconds) |
+| `MOA_LOOP_LAUNCHER` | `auto` | `tmux`, `nohup`, or `auto` |
+
+*Built by the AgentHUD Team using MoA Architecture v2.0*

@@ -1,0 +1,37 @@
+\section{Lightweight Validation}
+\label{sec:experiment}
+
+This paper does not claim benchmark-scale empirical improvements. Instead, we validate whether the repository realizes the proposed long-task abstraction and whether the artifacts support the intended roadmap-to-adapter-to-patch workflow.
+
+\paragraph{Structural validation.}
+We inspect the eight skill directories and verify that each exposes the same interface family: \texttt{SKILL.md}, an initializer, a daemon runner, daemon management scripts, and persistent state files. \Cref{tab:skills} shows the resulting comparison. The shared structure supports the main portability claim: loop semantics are independent of the underlying CLI target.
+
+\paragraph{Roadmap-to-patch case.}
+A typical epoch starts from the roadmap and selects a bounded task in \activestate{}. The optimize phase attempts the task and records evidence. If verification fails, the check phase should not simply report failure. It should produce a localized patch, for example: a prompt patch that changes how the agent reasons, a scope patch that narrows the edit radius, or a verification patch that adds a missing test. The next optimize phase consumes the patch while still being constrained by the roadmap backbone. This makes the failure reusable across epochs without requiring the next agent to reread the entire transcript.
+
+\begin{table}[t]
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lll}
+\toprule
+Removed component & Expected degradation & Observable symptom \\
+\midrule
+Roadmap & Plan drift & Local fixes violate global goals \\
+\activestate{} & Weak adaptation & Next epoch repeats setup work \\
+\failurebank{} & Forgetting & Recurring errors reappear \\
+Check phase & No backward signal & Failures become pass/fail notes \\
+Logs/snapshots & Poor auditability & Resume depends on chat context \\
+DAG scheduler & Low parallelism & Independent work is serialized \\
+Cron health check & No crash recovery & Daemon stays dead after failure \\
+\bottomrule
+\end{tabular}}
+\caption{Lightweight ablation analysis of the reflective loop design.}
+\label{tab:ablation}
+\end{table}
+
+\paragraph{Design-level ablation.}
+\Cref{tab:ablation} summarizes expected degradations when individual components are removed. These are not presented as measured benchmark results; they are acceptance criteria for the architecture. For example, if removing \failurebank{} does not make repeated failures harder to prevent, then the memory abstraction is not carrying useful information. If removing the check phase does not change future behavior, then the loop is only logging rather than optimizing.
+
+\paragraph{Takeaway.}
+The repository satisfies the core implementation requirements for long-task loop optimization: shared loop structure across CLIs, explicit roadmap/adapter state separation, auditable mode transitions, and an extension path from single-agent vertical epochs to multi-agent DAG coordination.

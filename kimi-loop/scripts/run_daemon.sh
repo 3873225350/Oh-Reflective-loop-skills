@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #================================================================
-# Gemini Loop Daemon (Standalone - No Shared Templates)
+# Kimi Loop Daemon (Standalone - No Shared Templates)
 #================================================================
 
 SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

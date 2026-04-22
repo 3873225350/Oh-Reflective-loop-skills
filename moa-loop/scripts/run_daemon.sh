@@ -12,4 +12,4 @@ WORKSPACE="${WORKSPACE:-$(pwd)}"
 export LOOP_NAME INTERVAL WORKSPACE
 
 # Run v2 daemon (DAG + Blackboard + PEFT)
-python3 "${SKILL_DIR}/run_daemon_v2.py"
+python3 "${SKILL_DIR}/run_daemon.py"

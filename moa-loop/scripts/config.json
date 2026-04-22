@@ -81,7 +81,7 @@
   },
 
   "blackboard": {
-    "persist_path": ".reflective-loop/state/{LOOP_NAME}/blackboard.json",
+    "persist_path": ".moa-loop/state/{LOOP_NAME}/blackboard.json",
     "heartbeat_timeout_seconds": 120,
     "max_event_log": 1000
   }

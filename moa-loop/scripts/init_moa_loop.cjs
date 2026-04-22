@@ -10,7 +10,7 @@ const path = require('path');
 const loopName = process.argv[2] || 'DEFAULT_MOA_ROADMAP';
 const workspace = process.argv[3] || process.cwd();
 
-const stateDir = path.join(workspace, '.reflective-loop', 'state', loopName);
+const stateDir = path.join(workspace, '.moa-loop', 'state', loopName);
 const subTasksDir = path.join(stateDir, 'sub-tasks');
 const dispatchLogsDir = path.join(stateDir, 'dispatch_logs');
 const logsDir = path.join(stateDir, 'logs');

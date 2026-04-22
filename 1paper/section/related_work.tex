@@ -1,0 +1,16 @@
+\section{Related Work}
+
+\paragraph{LLM agents and coding agents.}
+Recent LLM agents use tools, executable actions, and environment feedback to solve increasingly complex tasks \citep{codeact,alphaevolve,automind}. These systems demonstrate that agentic execution can outperform static prompting when tasks require interaction and revision. \ours{} is complementary: it does not propose a new base policy, but a persistence layer that helps coding agents continue work across repeated sessions and checks.
+
+\paragraph{Experience learning and agent memory.}
+Prior work studies experiential learning, workflow memory, procedural memory, and agentic memory \citep{expel,awm,memp,legomem,xu2025amemagenticmemoryllm,reme}. These methods store reusable knowledge from prior trajectories. \ours{} shares the goal of reuse, but targets repository-level engineering state rather than only task-level behavior. Its memory is split into roadmap, active adapter, logs, and failure bank so that different temporal scales can evolve independently.
+
+\paragraph{Skills and reusable procedures.}
+Skill libraries provide reusable abstractions for agent behavior, ranging from embodied skills to tool-use procedures \citep{voyager,anthropic_skills}. \ours{} treats each loop skill as a reusable orchestration skill: it teaches a CLI agent how to plan, optimize, check, and persist state. The focus is therefore not a domain skill such as web navigation, but a meta-skill for sustained engineering.
+
+\paragraph{Multi-agent orchestration.}
+Multi-agent systems often require dependency-aware scheduling and shared communication substrates. The horizontal DAG extension in \ours{} follows this direction by separating parallelizable subtasks from causally dependent ones. The vertical loop ensures that such parallelism does not erase temporal order: every epoch still produces a recoverable state transition.
+
+\paragraph{Loop mechanisms in agent runtimes.}
+Existing agent products expose different continuation mechanisms. Hook-based systems can intercept lifecycle events such as stopping; daemon-based systems can resume an external process on a timer; and application-level cron systems can schedule prompts inside the app event loop. These mechanisms differ operationally, but they share the same research question for long tasks: what state must persist between invocations? \ours{} argues that the roadmap, adapter, patches, and failure bank are the minimum state needed to make those invocations behave like optimization rather than repetition.

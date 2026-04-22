@@ -1,184 +1,141 @@
-# codex-loop
+# Oh-Reflective-Loop-Skills
 
-`codex-loop` is a Codex skill for recurring, plan-driven iteration.
+![AgentHUD Banner](https://raw.githubusercontent.com/Harzva/agent-hud/main/media/agenthud.svg)
 
-It is the Codex-side counterpart to a `/loop` workflow:
+A collection of **self-contained, autonomous Reflective Loop skills** for various AI coding agents. Each skill implements the same ML-inspired architecture but targets a different CLI.
 
-- read one active plan
-- inspect recent evolution notes
-- execute one bounded slice
-- write the next evolution note
-- prepare the next handoff
+---
 
-It also includes an optional automation runner that can periodically resume the same Codex thread.
+## Architecture
 
-## Package contents
+Every skill treats long-horizon agent work as an **iterative optimization problem**:
 
-- `SKILL.md`
-- `agents/openai.yaml`
-- `references/automation-layout.md`
-- `references/cron-integration.md`
-- `references/evolution-template.md`
-- `references/workspace-shell.md`
-- `scripts/codex_loop_automation.py`
-- `scripts/monitor_codex_loop.sh`
-- `scripts/print_cron_entry.sh`
-- `scripts/start_codex_loop.sh`
-- `scripts/status_codex_loop.sh`
-- `scripts/stop_codex_loop.sh`
+1. **Forward Pass (optimize)**: Implementation agent reads failure history and applies local patches, then executes one bounded slice of work.
+2. **Backward Signal (check)**: Checker agent reviews the result, computes the "loss", and generates **Local Patches** to guide the next pass.
+3. **Failure Memory**: Prevents "catastrophic forgetting" of errors via `failure_bank.json`.
 
-## Install shape
+### State Files
 
-This repository is packaged so it can be copied or installed into:
+| File | Metaphor | Purpose |
+|------|----------|---------|
+| `<LOOP_NAME>.md` | Pretrained Backbone | Global roadmap, slow-moving |
+| `active_task.json` | PEFT/LoRA Adapter | Fast execution state with local patches |
+| `failure_bank.json` | Failure Memory | Registry of past errors |
+| `last_mode.txt` | Mode State | Tracks optimize/check alternation |
 
-```text
-~/.codex/skills/codex-loop/
-```
+---
 
-## Install with native skill install
+## Skills
 
-If your Codex build exposes the native skill installer, install directly from GitHub with:
+| Skill | CLI | State Dir | Models | Health Check |
+|-------|-----|-----------|--------|:------------:|
+| [gemini-loop](gemini-loop/) | `gemini` | `.reflective-loop/state` | 5 models (flash/pro) | `*/5` |
+| [codex-loop](codex-loop/) | `codex` | `.codex-loop/state` | 5 models (o3, o4-mini, gpt-4.1) | `*/10` |
+| [claude-loop](claude-loop/) | `claude` | `.claude-loop/state` | 2 models (sonnet, haiku) | `*/10` |
+| [cursor-loop](cursor-loop/) | `cursor` | `.cursor-loop/state` | default | `*/15` |
+| [kimi-loop](kimi-loop/) | `kimi` | `.kimi-loop/state` | default | `*/15` |
+| [minimax-loop](minimax-loop/) | `mmx` | `.minimax-loop/state` | default | `*/5` |
+| [qwen-loop](qwen-loop/) | `qwen` | `.qwen-loop/state` | default | `*/10` |
+| [moa-loop](moa-loop/) | multi | `.moa-loop/state` | all agents | `*/5` |
 
-```bash
-skill install https://github.com/Harzva/codex-loop-skill
-```
+---
 
-After installation, restart Codex to pick up the new skill.
-
-## Manual usage
-
-Example prompt:
-
-```text
-Use codex-loop to continue the active plan at .claude/plans/active-example-plan.md. Read the latest evolution note, complete one bounded iteration, write the next evolution note, and prepare the next handoff.
-```
-
-## Automation usage
-
-Create a recurring prompt file in the target workspace:
-
-```text
-.codex-loop/prompt.md
-```
-
-Example:
-
-```text
-基于 .claude/plans/active-example-plan.md 继续一次 loop 迭代。
-先读取最近的 evolution 记录；
-本轮只完成一个最小可验证推进；
-完成后更新 evolution note，并给出下一轮 handoff。
-```
-
-Then run:
+## Quick Start (Any Skill)
 
 ```bash
-bash ~/.codex/skills/codex-loop/scripts/start_codex_loop.sh
-bash ~/.codex/skills/codex-loop/scripts/status_codex_loop.sh
-bash ~/.codex/skills/codex-loop/scripts/monitor_codex_loop.sh --watch
-bash ~/.codex/skills/codex-loop/scripts/stop_codex_loop.sh
+# 1. Initialize
+node <skill>-loop/scripts/init_<name>_loop.cjs MY_ROADMAP
+
+# 2. Start daemon (tmux/nohup auto-select)
+bash <skill>-loop/scripts/start_<name>_loop.sh MY_ROADMAP
+
+# 3. Check status
+bash <skill>-loop/scripts/status_<name>_loop.sh MY_ROADMAP
 ```
 
-The default automation layout is documented in `references/automation-layout.md`.
+### Daemon Management (All Skills)
 
-## Why this model is powerful
+Every skill provides the same daemon management interface:
 
-The key idea in `codex-loop` is:
+| Command | Script | Purpose |
+|---------|--------|---------|
+| Start | `start_<name>_loop.sh` | Start daemon in tmux/nohup with PID tracking |
+| Stop | `stop_<name>_loop.sh` | Graceful stop (SIGTERM → wait → SIGKILL) |
+| Status | `status_<name>_loop.sh` | Check PID health + last mode + recent logs |
+| Cron | `print_cron_entry.sh` | Print `@reboot` + health-check cron entries |
 
-- keep the outer loop executor stable
-- change the inner task definition by editing the prompt file
+**gemini-loop** uses `start_daemon.sh` / `status_daemon.sh` naming.
 
-That means you usually do **not** need to restart the daemon or abandon the existing thread just to change the work.
+### Extended Commands (Select Skills)
 
-What stays stable:
+**codex-loop** includes additional monitoring:
+```bash
+bash codex-loop/scripts/monitor_codex_loop.sh          # snapshot dashboard
+bash codex-loop/scripts/monitor_codex_loop.sh --watch   # continuous watch
+```
 
-- the daemon process
-- the current Codex thread
-- the state directory
-- the log files
+**moa-loop** includes DAG + Blackboard monitoring:
+```bash
+bash moa-loop/scripts/monitor_moa_loop.sh               # DAG + Blackboard snapshot
+bash moa-loop/scripts/monitor_moa_loop.sh --watch       # continuous watch
+```
 
-What can change live between ticks:
+---
 
-- the active plan path
-- the iteration objective
-- the review criteria
-- whether the next pass focuses on implementation, review, cleanup, or another bounded task
-- how much detail the logs or handoff should include
+## Cron Integration
 
-In other words:
-
-`codex-loop` treats the daemon as the outer executor and `prompt.md` as the hot-swappable inner contract.
-
-## Sticky task continuity
-
-One important refinement from real long-running use:
-
-- the loop should not pick a brand-new task every tick just because the prompt file contains many candidates
-- the daemon should keep a sticky active task across ticks until that task is done, blocked, or intentionally deferred
-
-Recommended rule for `prompt.md`:
-
-- treat the task list as a pool
-- but also maintain one active task state
-- if the previous task is still unfinished and not blocked, continue it first
-- only branch to another task after the current one is marked done, blocked, or explicitly deferred with a reason
-
-This keeps `codex-loop` from turning into a context-switching backlog spinner. In practice it behaves more like:
-
-- one outer daemon
-- one persistent Codex thread
-- one hot-swappable prompt contract
-- one sticky active task until closure
-
-That combination is what makes long unattended iteration actually accumulate.
-
-## Monitoring and live logs
-
-`codex-loop` runs as a background daemon, so it does not keep printing into your current shell by default.
-
-Use these commands after startup:
+Every skill includes `print_cron_entry.sh` for OS-level supervision:
 
 ```bash
-bash ~/.codex/skills/codex-loop/scripts/status_codex_loop.sh
-bash ~/.codex/skills/codex-loop/scripts/monitor_codex_loop.sh
+# Print cron entries for a single skill
+bash <skill>-loop/scripts/print_cron_entry.sh
+
+# Install all skills into crontab at once
+{
+  for skill in gemini codex claude cursor kimi minimax qwen moa; do
+    bash ${skill}-loop/scripts/print_cron_entry.sh
+  done
+} | crontab -
 ```
 
-This prints a status snapshot with:
+Cron provides two functions:
+- **`@reboot`** — Auto-start daemon after machine reboot
+- **`*/N * * * *`** — Periodic health check, auto-restart on failure
 
-- whether the daemon is running
-- the current PID
-- whether the daemon is in `tick` or `sleeping`
-- the latest `raw_log_path`
-- the latest `last_message_file`
+See [references/cron-integration.md](references/cron-integration.md) for full documentation.
 
-To continuously watch the daemon output:
+---
 
-```bash
-tail -f /absolute/workspace/.codex-loop/state/logs/daemon_stdout.log
+## Design Principles
+
+1. **Self-Contained**: Every skill is fully independent with zero external dependencies.
+2. **Reflective Loop**: optimize/check alternation provides continuous self-correction.
+3. **Multi-Model Fallback**: Skills try multiple models in order until one succeeds.
+4. **State Separation**: Slow (roadmap) vs fast (active_task.json) parameters.
+5. **Supervised Logging**: `[timestamp] [Supervised-PID:PID|||PLAN] [Sub-PID: SUBPID|||TASK/TOTAL]`
+6. **Daemon Management**: Unified start/stop/status/cron across all skills.
+7. **Differential Cron**: Health check intervals tuned per skill workload.
+
+---
+
+## File Structure (Per Skill)
+
+```
+<name>-loop/
+├── README.md                          # Skill-specific documentation
+├── SKILL.md                           # Core instruction set
+├── prompt.md                          # Default loop prompt
+└── scripts/
+    ├── init_<name>_loop.cjs           # Initialize state files
+    ├── dispatch_agent.sh              # Dispatch to CLI with fallback
+    ├── run_daemon.py                  # Core daemon (optimize/check)
+    ├── run_daemon.sh                  # Shell entry point
+    ├── start_<name>_loop.sh           # Start daemon (tmux/nohup)
+    ├── stop_<name>_loop.sh            # Stop daemon gracefully
+    ├── status_<name>_loop.sh          # Check daemon status
+    └── print_cron_entry.sh            # Print cron entries
 ```
 
-To continuously watch one tick's raw event log:
+---
 
-```bash
-tail -f /absolute/workspace/.codex-loop/state/logs/tick_YYYYMMDD_HHMMSS.log
-```
-
-## Optional cron integration
-
-`codex-loop` already has its own daemon timer, so cron is optional.
-
-Use cron only as an outer scheduler when you want:
-
-- start-on-boot
-- periodic health checks
-- scheduled start/stop windows
-
-Do not use cron to replace the daemon's thread-aware loop logic.
-
-Print example cron entries with:
-
-```bash
-bash ~/.codex/skills/codex-loop/scripts/print_cron_entry.sh
-```
-
-See `references/cron-integration.md` for the recommended pattern.
+*Part of the AgentHUD Autonomous Engineering Suite.*
