@@ -56,5 +56,33 @@
     "max_retries": 3,
     "retry_delay": 5,
     "escalate_on_failure": true
+  },
+
+  "dag": {
+    "nodes": [
+      {"id": "research", "type": "research", "deps": []},
+      {"id": "code", "type": "coding", "deps": ["research"]},
+      {"id": "test", "type": "coding", "deps": ["code"]},
+      {"id": "doc", "type": "writing", "deps": ["code"]},
+      {"id": "review", "type": "analysis", "deps": ["test", "doc"]}
+    ]
+  },
+
+  "peft": {
+    "freeze_roadmap": true,
+    "adapter_scope": "sub-tasks",
+    "max_adapter_changes_per_epoch": 5
+  },
+
+  "iteration": {
+    "max_epochs": 100,
+    "snapshot_interval": 1,
+    "rollback_on_failure": true
+  },
+
+  "blackboard": {
+    "persist_path": ".reflective-loop/state/{LOOP_NAME}/blackboard.json",
+    "heartbeat_timeout_seconds": 120,
+    "max_event_log": 1000
   }
 }

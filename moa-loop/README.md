@@ -1,130 +1,78 @@
 # MOA Loop v2.0 (Mixture of Agents)
 
-![AgentHUD Banner](https://raw.githubusercontent.com/Harzva/agent-hud/main/media/agenthud.svg)
-
-An intelligent orchestration loop that dynamically coordinates multiple AI agents based on availability, capability matching, and task requirements.
+An intelligent orchestration loop built on **ML training paradigm**: Roadmap as pretrained weights (frozen), experiments as PEFT/Adapter fine-tuning, DAG as computation graph.
 
 ---
 
-## 🎯 What is MOA?
+## Architecture
 
-MOA (Mixture of Agents) v2.0 is an enhanced orchestration system that:
+```
+纵向迭代 (Epoch)                    横向DAG (Computation Graph)
+─────────────────                   ─────────────────────────────
+Epoch N:                            Layer 0: [research]        ← PARALLEL
+  optimize ──→ check                Layer 1: [code]            ← SERIAL
+     ↓            ↓                 Layer 2: [test, doc]       ← PARALLEL
+  snapshot    PEFT adapt            Layer 3: [review]          ← SERIAL
+     ↓            ↓
+  next epoch ←──┘                   通信: Shared Blackboard
+```
 
-1. **Auto-Detection** - Automatically discovers which AI agents are installed
-2. **Capability Matching** - Routes tasks to agents based on their strengths
-3. **Parallel Execution** - Runs multiple agents simultaneously for complex tasks
-4. **Smart Fallback** - Automatically falls back if primary agent fails
-5. **Result Aggregation** - Collects and summarizes results from multiple agents
+## Core Design: ML Training Paradigm
 
-## 🧠 Agent Capabilities
+| ML Concept | MOA Loop Equivalent |
+|---|---|
+| Pretrained Weights | Roadmap backbone (frozen) |
+| PEFT / LoRA | Sub-task adapter fine-tuning |
+| Training Loop | optimize ↔ check epochs |
+| Computation Graph | DAG task scheduling |
+| Checkpoint | Iteration snapshot |
 
-| Agent | Strengths | Best For | Max Context | Cost Tier |
-|-------|-----------|----------|------------|----------|
-| 🔮 **gemini** | Reasoning, code, fast | Coding, analysis | 1M tokens | Medium |
-| 📝 **claude** | Analysis, writing, safety | Writing, review | 200K tokens | High |
-| 💻 **qwen** | Coding, math, multilingual | Coding, math | 131K tokens | Low |
-| 📚 **kimi** | Long context, summarization | Research, docs | 2M tokens | Medium |
-| 🎯 **cursor** | IDE integration, refactoring | Code edit | 100K tokens | Medium |
-| ⚡ **minimax** | Speed, quick response | Quick tasks | 10K tokens | Low |
+## Quick Start
 
-## 🚀 Quick Start
-
-### 1. Detect Available Agents
 ```bash
-bash moa-loop/scripts/detect_agents.sh
-```
-Output:
-```
-🔍 Detecting available AI agents...
-✅ gemini is available
-✅ claude is available
-✅ qwen is available
-❌ cursor is not available
-📊 Summary: gemini claude qwen
-```
-
-### 2. Configure (Optional)
-Edit `moa-loop/scripts/config.json`:
-```json
-{
-  "primary_agent": "gemini",
-  "enabled_agents": ["gemini", "claude", "qwen", "kimi"],
-  "max_parallel": 3,
-  "agent_capabilities": { ... },
-  "task_routing": {
-    "coding": ["gemini", "claude", "qwen"],
-    "research": ["kimi", "gemini"],
-    "quick": ["minimax", "qwen"]
-  }
-}
-```
-
-### 3. Initialize a Loop
-```bash
+# Initialize
 node moa-loop/scripts/init_moa_loop.cjs MY_PROJECT
-```
 
-### 4. Run the Daemon
-```bash
+# Start daemon
 bash moa-loop/scripts/run_daemon.sh MY_PROJECT
 ```
 
-## 📁 State Files
+## Modules
+
+- `core/dag_scheduler.py` — DAG scheduling with topological sort
+- `core/shared_blackboard.py` — Centralized agent communication
+- `core/iteration_manager.py` — Epoch management + PEFT adaptation
+- `run_daemon_v2.py` — Main loop orchestrator
+
+## DAG Example
 
 ```
-.reflective-loop/state/{LOOP_NAME}/
-├── dispatch_logs/
-│   ├── moa-dispatch_*.log      # Main dispatch log
-│   ├── gemini-*.log              # Per-agent logs
-│   ├── claude-*.log
-│   └── ...
-└── logs/
-    └── moa-loop-*.log           # Daemon supervision logs
+research ──→ code ──┬──→ test  ──┬──→ review
+                    └──→ doc   ──┘
 ```
 
-## 🔍 Example Output
+- Layer 0: `research` (no deps → parallel)
+- Layer 1: `code` (depends on research → serial)
+- Layer 2: `test`, `doc` (both depend on code → parallel)
+- Layer 3: `review` (depends on test + doc → serial)
+
+## PEFT Fine-Tuning
 
 ```
-╔════════════════════════════════════════════════════════════════╗
-║  MOA (Mixture of Agents) Dispatcher v2.0                     ║
-╚════════════════════════════════════════════════════════════════╝
-[2026-04-22 10:30:15] [PROVIDER:moa] ══════════ MOA Dispatch Start ══════════
-[2026-04-22 10:30:15] [PROVIDER:moa] Mode: optimize, Loop: MY_PROJECT
-[2026-04-22 10:30:15] [PROVIDER:moa] 📊 Agent Status:
-[2026-04-22 10:30:15] [PROVIDER:moa]    Available: gemini claude qwen kimi
-[2026-04-22 10:30:15] [PROVIDER:moa]    Primary: gemini
-[2026-04-22 10:30:15] [PROVIDER:moa]    Max Parallel: 3
-[2026-04-22 10:30:15] [PROVIDER:moa] 🚀 Trying primary agent: gemini
-[2026-04-22 10:30:15] [PROVIDER:moa] ▶ Invoking gemini...
-[2026-04-22 10:30:45] [SUCCESS] ✓ gemini completed in 30s
-[2026-04-22 10:30:45] [PROVIDER:moa] ══════════ Dispatch Complete ══════════
+Roadmap Backbone (FROZEN = pretrained weights)
+├── T1: Core task A  ← cannot modify
+├── T2: Core task B  ← cannot modify
+└── T3: Core task C  ← cannot modify
+
+Sub-task Adapters (TRAINABLE = PEFT)
+├── A1: Adapt based on experiment results
+├── A2: Local plan adjustments only
+└── A3: Task-specific lightweight adaptation
 ```
 
-## 🔧 Task Routing
+## Communication Layers
 
-MOA automatically routes tasks based on type:
+- **Horizontal** (real-time): Shared Blackboard — O(1) channels for N agents
+- **Vertical** (persistent): JSON + SQLite — versioned, auditable, recoverable
 
-```json
-"task_routing": {
-  "coding":       ["gemini", "claude", "qwen", "cursor"],
-  "writing":      ["claude", "gemini", "qwen"],
-  "analysis":     ["claude", "gemini", "kimi"],
-  "research":     ["kimi", "gemini", "claude"],
-  "quick":       ["minimax", "qwen"],
-  "default":     ["gemini", "claude"]
-}
-```
-
-## 🔄 Retry Policy
-
-Configure automatic retry on failure:
-
-```json
-"retry_policy": {
-  "max_retries": 3,
-  "retry_delay": 5,
-  "escalate_on_failure": true
-}
-```
-
-*Built with ❤️ by the AgentHUD Team using MoA Architecture v2.0*
+*Built with AgentHUD MoA Architecture v2.0*
