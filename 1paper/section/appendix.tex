@@ -1,5 +1,42 @@
 \section{Appendix}
 
+\subsection{Supplementary Visual Overview}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/xyz-agent-reflective-loop-skills-framework.png}
+\caption{A broader synthesis of \ours{} with a three-axis collaboration view. The figure combines parallel role decomposition, temporal reflective evolution, and heterogeneous agent capabilities under one shared task objective.}
+\label{fig:xyz_framework}
+\end{figure*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/long-task-loop-selection-guide.png}
+\caption{Compact selection guide for long-task loop mechanisms. Hook loops are best when preventing false completion is the priority, daemon loops favor unattended background progress, and application cron loops suit product-managed periodic tasks.}
+\label{fig:loop_selection}
+\end{figure*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/hook-loop-trigger-boundary.png}
+\caption{Supplementary breakdown of the hook-loop trigger boundary. The continuation decision is made when the runtime is about to stop, allowing the system to block premature completion and refeed a reason into the next step.}
+\label{fig:hook_detail}
+\end{figure*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/external-daemon-loop-trigger-boundary.png}
+\caption{Supplementary breakdown of the external daemon loop. A detached process advances long tasks through periodic wake-ups, bounded prompts, heartbeat logging, and resumable state files.}
+\label{fig:daemon_detail}
+\end{figure*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/application-cron-loop-trigger-boundary.png}
+\caption{Supplementary breakdown of the application cron loop. The scheduler lives inside the application process, creates scheduled tasks, and enqueues prompts when the next firing time is reached.}
+\label{fig:cron_detail}
+\end{figure*}
+
 \subsection{Repository Layout}
 
 Each primary loop skill follows the same layout:

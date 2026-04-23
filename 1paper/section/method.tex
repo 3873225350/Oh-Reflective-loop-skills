@@ -5,7 +5,14 @@
 \ours{} starts from a practical observation: the hard part of autonomous coding is not one patch, but continuity across many patches. A long task needs a stable objective, bounded local work, periodic checking, and a way to resume after the model, process, or human session stops. We therefore treat the loop as the primary unit of design. The CLI call is only one forward pass inside a larger training-like procedure.
 
 \subsection{Unified Loop Skill Interface}
-\ours{} packages the same long-task loop abstraction for seven agent CLIs plus one multi-agent orchestrator. Each skill directory contains a human-readable \texttt{SKILL.md}, a default prompt, an initialization script, a daemon runner, and state files. The CLI-specific layer handles dispatch and model invocation; the loop semantics remain shared. This design makes the loop portable: Codex, Gemini, Claude, Qwen, Kimi, MiniMax, and Cursor can use different command interfaces while preserving the same state machine.
+\ours{} packages the same long-task loop abstraction for seven agent CLIs plus one multi-agent orchestrator. Each skill directory contains a human-readable \texttt{SKILL.md}, a default prompt, an initialization script, a daemon runner, and state files. The CLI-specific layer handles dispatch and model invocation; the loop semantics remain shared. This design makes the loop portable: Codex, Gemini, Claude, Qwen, Kimi, MiniMax, and Cursor can use different command interfaces while preserving the same state machine. \Cref{fig:rls_architecture} summarizes this shared repository contract.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/reflective-loop-skills-architecture.png}
+\caption{Repository-level architecture of \ours{}. All loop skills expose the same reflective engine, persistent state contract, daemon management interface, and OS-level supervision hooks while targeting different agent CLIs.}
+\label{fig:rls_architecture}
+\end{figure*}
 
 \begin{table*}[t]
 \centering
@@ -74,7 +81,14 @@ The vertical loop is intentionally serial. At epoch $k$, the agent reads the roa
 
 \subsection{Loop Trigger Boundaries}
 
-Different systems implement ``loop'' at different trigger boundaries. Claude/Ralph-style loops intercept the runtime stop point: a Stop hook can return a blocking decision and refeed a reason into the next model step. Codex-style loops use external time: a shell or Python daemon sleeps, wakes, and resumes the same thread through \texttt{codex exec resume}. LikeCode-style \texttt{/loop} behaves like cron at the user level, but it is not Linux \texttt{crontab}; it is an application-level scheduler that creates tasks and later enqueues prompts inside the running app. \ours{} abstracts over these mechanisms by requiring every trigger to produce the same epoch contract: read roadmap, run a bounded slice, check, persist patches, and prepare the next epoch.
+Different systems implement ``loop'' at different trigger boundaries. Claude/Ralph-style loops intercept the runtime stop point: a Stop hook can return a blocking decision and refeed a reason into the next model step. Codex-style loops use external time: a shell or Python daemon sleeps, wakes, and resumes the same thread through \texttt{codex exec resume}. LikeCode-style \texttt{/loop} behaves like cron at the user level, but it is not Linux \texttt{crontab}; it is an application-level scheduler that creates tasks and later enqueues prompts inside the running app. \Cref{fig:loop_mechanisms} provides a visual summary. \ours{} abstracts over these mechanisms by requiring every trigger to produce the same epoch contract: read roadmap, run a bounded slice, check, persist patches, and prepare the next epoch.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/long-task-loop-mechanism-comparison.png}
+\caption{Three trigger families for long-horizon agent continuation. The shared reflective contract stays fixed; the main difference is which scheduler advances the next epoch: runtime hook, external daemon tick, or application scheduler.}
+\label{fig:loop_mechanisms}
+\end{figure*}
 
 \begin{table*}[t]
 \centering
@@ -97,9 +111,16 @@ OS-level cron & System scheduler (\texttt{crontab}) & Health-check and restart d
 
 \subsection{\texttt{moa-loop}: From One Loop to a Computation Graph}
 
-The repository also includes \texttt{moa-loop}, and it should be part of the paper because it answers the scaling question: what happens after a single long-task loop becomes multiple cooperating agents? We treat \texttt{moa-loop} as the multi-agent generalization of \ours{}, not as an eighth CLI wrapper. In this view, the roadmap remains the frozen backbone, subtask adapters act like PEFT-style local updates, the optimize/check cycle remains the training epoch, and the DAG becomes the computation graph.
+The repository also includes \texttt{moa-loop}, and it should be part of the paper because it answers the scaling question: what happens after a single long-task loop becomes multiple cooperating agents? We treat \texttt{moa-loop} as the multi-agent generalization of \ours{}, not as an eighth CLI wrapper. In this view, the roadmap remains the frozen backbone, subtask adapters act like PEFT-style local updates, the optimize/check cycle remains the training epoch, and the DAG becomes the computation graph. \Cref{fig:moa_axes} highlights the three orthogonal axes of this extension.
 
 Concretely, independent nodes such as research, documentation, and tests may run in parallel, while dependent nodes remain serial. A centralized shared blackboard stores horizontal working state, avoiding point-to-point message storms. The key rule is separation of concerns: horizontal coordination optimizes latency inside an epoch, while vertical persistence preserves ordered project evolution across epochs. Thus \texttt{moa-loop} is the bridge from persistent single-agent loops to mixture-of-agents training dynamics.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/three-axis-multi-agent-collaboration.png}
+\caption{Three-axis view of multi-agent collaboration. Horizontal collaboration distributes work within a round, temporal evolution carries state across rounds, and capability heterogeneity lets specialized agents or models cooperate under one persistent task objective.}
+\label{fig:moa_axes}
+\end{figure*}
 
 \subsection{Two-Layer Communication}
 

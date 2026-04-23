@@ -4,6 +4,23 @@
 
 A collection of **self-contained, autonomous Reflective Loop skills** for various AI coding agents. Each skill implements the same ML-inspired architecture but targets a different CLI.
 
+## Visual Overview
+
+![Reflective Loop Skills Architecture](1paper/figures/reflective-loop-skills-architecture.png)
+
+The repository treats long-horizon agent work as a persistent optimization loop:
+`roadmap -> active_task -> optimize -> check -> local_patch -> failure_bank -> next epoch`.
+
+![Loop Mechanism Comparison](1paper/figures/long-task-loop-mechanism-comparison.png)
+
+The same state contract can be scheduled by three different continuation mechanisms:
+
+- **Hook Loop**: continue at the runtime stop boundary
+- **External Daemon Loop**: continue on external time ticks
+- **Application Cron Loop**: continue from an app-level scheduler
+
+![Loop Selection Guide](1paper/figures/long-task-loop-selection-guide.png)
+
 ---
 
 ## Architecture
@@ -37,6 +54,19 @@ Every skill treats long-horizon agent work as an **iterative optimization proble
 | [minimax-loop](minimax-loop/) | `mmx` | `.minimax-loop/state` | default | `*/5` |
 | [qwen-loop](qwen-loop/) | `qwen` | `.qwen-loop/state` | default | `*/10` |
 | [moa-loop](moa-loop/) | multi | `.moa-loop/state` | all agents | `*/5` |
+
+---
+
+## Which Loop Should I Use?
+
+| Need | Best Fit | Why |
+|------|----------|-----|
+| Prevent fake completion | Hook Loop | Blocks stopping until completion criteria is actually met |
+| Keep working in the background | External Daemon Loop | Detached process resumes the same task over time |
+| Offer periodic tasks inside a product | Application Cron Loop | Natural fit for `/loop`, list, pause, resume, and delete flows |
+| Coordinate multiple agents | `moa-loop` | Adds DAG scheduling and shared blackboard collaboration |
+
+For the deeper conceptual comparison, see [references/long-task-loop-mechanisms-zh.md](references/long-task-loop-mechanisms-zh.md).
 
 ---
 
