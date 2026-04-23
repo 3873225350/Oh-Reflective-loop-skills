@@ -1,0 +1,15 @@
+{
+  "active_task_id": "T2",
+  "status": "in_progress",
+  "bounded_target": "Audit all 4 projects, identify concrete improvements, and apply first round of fixes",
+  "local_patches": [
+    {
+      "type": "scope_patch",
+      "description": "Focus on portfolio-resume and reflective-loop-simulator first (highest quality impact)",
+      "applied": true
+    }
+  ],
+  "scope_patch": "Fix top issues found in portfolio-resume and reflective-loop-simulator",
+  "prompt_patch": "Update portfolio metrics from 7 to 8 skills (include moa-loop); ensure simulator references match current repo state",
+  "verification_patch": "All projects open without console errors; portfolio shows 8 skills; simulator scenarios match paper terminology"
+}

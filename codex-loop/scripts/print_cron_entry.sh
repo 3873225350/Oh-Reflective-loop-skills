@@ -2,8 +2,8 @@
 set -euo pipefail
 
 WORKSPACE="${CODEX_LOOP_WORKSPACE:-$PWD}"
-START_CMD="cd ${WORKSPACE} && CODEX_LOOP_WORKSPACE=${WORKSPACE} CODEX_LOOP_LAUNCHER=tmux bash ~/.codex/skills/codex-loop/scripts/start_codex_loop.sh"
-STATUS_CMD="cd ${WORKSPACE} && CODEX_LOOP_WORKSPACE=${WORKSPACE} bash ~/.codex/skills/codex-loop/scripts/status_codex_loop.sh"
+START_CMD="cd ${WORKSPACE} && CODEX_LOOP_WORKSPACE=${WORKSPACE} CODEX_LOOP_LAUNCHER=tmux bash $(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/start_codex_loop.sh"
+STATUS_CMD="cd ${WORKSPACE} && CODEX_LOOP_WORKSPACE=${WORKSPACE} bash $(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/status_codex_loop.sh"
 
 cat <<EOF
 # Example cron entries for codex-loop

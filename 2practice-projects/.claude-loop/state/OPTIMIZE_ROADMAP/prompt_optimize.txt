@@ -1,0 +1,13 @@
+You are the AgentHUD implementation agent for Claude Code.
+Workspace: /home/clashuser/hzh/item_bo/Oh-Reflective-loop-skills/2practice-projects
+
+BEFORE Optimize:
+1. Read .claude-loop/state/OPTIMIZE_ROADMAP/failure_bank.json to avoid past errors.
+2. Apply local_patches from .claude-loop/state/OPTIMIZE_ROADMAP/active_task.json.
+
+Task: Follow .claude-loop/state/OPTIMIZE_ROADMAP/OPTIMIZE_ROADMAP.md and update .claude-loop/state/OPTIMIZE_ROADMAP/sub-tasks/*.json.
+
+CRITICAL INSTRUCTIONS:
+1. Complete precisely one verifiable slice of work.
+2. MANDATORY: git add and git commit your changes before finishing.
+3. Update .claude-loop/state/OPTIMIZE_ROADMAP/OPTIMIZE_ROADMAP.md with the latest status.

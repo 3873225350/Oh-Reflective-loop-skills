@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "failures": [
+    {
+      "id": "F001",
+      "failure_type": "stale_metrics",
+      "symptom": "Portfolio showed 7 skills instead of 8 after moa-loop addition",
+      "patch": "Update metrics array to reflect current skill count (7 → 8)",
+      "seen_in": ["portfolio-resume/app.js:7"],
+      "resolved": true
+    },
+    {
+      "id": "F002",
+      "failure_type": "missing_timeline_entry",
+      "symptom": "Timeline did not mention daemon management / cron support",
+      "patch": "Add timeline entry for daemon management milestone",
+      "seen_in": ["portfolio-resume/app.js:91-95"],
+      "resolved": true
+    }
+  ]
+}

@@ -5,6 +5,8 @@ references/*
 .reflective-loop/state/*/iterations/
 .reflective-loop/state/*/logs/
 .reflective-loop/state/*/dispatch_logs/
+.claude-loop/state/*/daemon.pid
+daemon.pid
 .claude/
 .gh-config-sai/
 *.aux

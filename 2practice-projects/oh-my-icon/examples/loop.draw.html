@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Oh My Icon Preview</title>
+    <style>
+      body {
+        min-height: 100vh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        background: #fbf8f0;
+      }
+      .omi-wrap {
+  width: 192px;
+  height: 192px;
+  display: inline-grid;
+  place-items: center;
+  color: #141513;
+}
+.omi-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.omi-svg path,
+.omi-svg circle,
+.omi-svg rect,
+.omi-svg line,
+.omi-svg polyline,
+.omi-svg polygon {
+  vector-effect: non-scaling-stroke;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.omi-svg path,
+.omi-svg circle,
+.omi-svg rect,
+.omi-svg line,
+.omi-svg polyline,
+.omi-svg polygon {
+  stroke-dasharray: 420;
+  stroke-dashoffset: 420;
+  animation: omi-draw 1.8s cubic-bezier(.2,.8,.2,1) infinite alternate;
+}
+@keyframes omi-draw {
+  to { stroke-dashoffset: 0; }
+}
+    </style>
+  </head>
+  <body>
+    <span class="omi-wrap"><svg class="omi-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <path d="M96 42c-8-13-23-21-39-18-21 4-35 24-31 45s24 35 45 31c12-2 22-10 28-20" stroke="currentColor" stroke-width="10" stroke-linecap="round"/>
+  <path d="M95 18v25H70" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M32 86c8 13 23 21 39 18" stroke="currentColor" stroke-width="10" stroke-linecap="round"/>
+</svg>
+</span>
+  </body>
+</html>

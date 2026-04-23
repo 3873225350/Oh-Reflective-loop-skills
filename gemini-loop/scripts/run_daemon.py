@@ -6,7 +6,7 @@ import re
 from datetime import datetime
 
 # --- Configuration (Relative to Workspace) ---
-STATE_DIR = ".claude-loop/state"
+STATE_DIR = ".reflective-loop/state"
 # LOG_DIR and ACTIVE_LOG_LINK are set per-loop in setup_environment()
 ROADMAP_FILE = "ROADMAP.md"
 DISPATCH_SCRIPT_NAME = "dispatch_agent.sh"
@@ -64,11 +64,8 @@ def setup_environment():
     with open(PID_FILE, "w") as f:
         f.write(str(pid))
 
-    # Remove existing link/file (handles broken symlinks too)
-    try:
-        os.unlink(ACTIVE_LOG_LINK)
-    except (FileNotFoundError, OSError):
-        pass
+    if os.path.lexists(ACTIVE_LOG_LINK):
+        os.remove(ACTIVE_LOG_LINK)
 
     try:
         os.symlink(instance_log, ACTIVE_LOG_LINK)
@@ -94,7 +91,7 @@ def run():
     loop_name = os.environ.get("LOOP_NAME", "OPTIMIZE_ROADMAP")
 
     log("╔════════════════════════════════════════════════════════════════", plan_id, pid, instance_log)
-    log("║ SESSION START: Claude Loop Orchestrator (Supervised + Reflective)", plan_id, pid, instance_log)
+    log("║ SESSION START: Gemini Loop Orchestrator (Supervised)", plan_id, pid, instance_log)
     log(f"║ Plan ID: {plan_id}", plan_id, pid, instance_log)
     log(f"║ Log File: {instance_log}", plan_id, pid, instance_log)
     log("╚════════════════════════════════════════════════════════════════", plan_id, pid, instance_log)

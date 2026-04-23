@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reflective Portfolio</title>
+  <meta name="description" content="Interactive portfolio and resume for agentic engineering projects.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="field" aria-hidden="true"></canvas>
+
+  <header class="topbar">
+    <a class="mark" href="#home" aria-label="Reflective Portfolio home">
+      <span class="mark__glyph">R</span>
+      <span class="mark__text">Reflective Portfolio</span>
+    </a>
+    <nav class="nav" aria-label="Primary">
+      <a href="#work">Work</a>
+      <a href="#method">Method</a>
+      <a href="#timeline">Timeline</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <button class="icon-button" id="paletteToggle" type="button" aria-label="Change visual mode" title="Change visual mode">
+      <span></span>
+    </button>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="hero__copy">
+        <p class="kicker">Long-horizon agent engineering</p>
+        <h1 id="profileName">Building reflective systems that keep working.</h1>
+        <p class="hero__summary" id="profileSummary"></p>
+        <div class="hero__actions">
+          <a class="button button--primary" href="#work">View repositories</a>
+          <a class="button button--ghost" href="#contact">Start a conversation</a>
+        </div>
+      </div>
+      <div class="hero__metrics" id="heroMetrics" aria-label="Portfolio metrics"></div>
+    </section>
+
+    <section class="section intro-band" aria-label="Positioning">
+      <p>
+        I turn research ideas into durable engineering systems: roadmap-driven loops, agent memory, CLI automation, and interfaces that make complex work visible.
+      </p>
+    </section>
+
+    <section class="section work" id="work">
+      <div class="section__head">
+        <p class="kicker">Selected repositories</p>
+        <h2>Systems worth opening.</h2>
+      </div>
+      <div class="work__toolbar" aria-label="Project filters">
+        <button class="filter is-active" type="button" data-filter="all">All</button>
+        <button class="filter" type="button" data-filter="loop">Loop</button>
+        <button class="filter" type="button" data-filter="agent">Agent</button>
+        <button class="filter" type="button" data-filter="research">Research</button>
+      </div>
+      <div class="repo-grid" id="repoGrid"></div>
+    </section>
+
+    <section class="section method" id="method">
+      <div class="section__head">
+        <p class="kicker">Operating method</p>
+        <h2>Roadmaps as weights.</h2>
+      </div>
+      <div class="method__layout">
+        <ol class="method__steps" id="methodSteps"></ol>
+        <div class="console" aria-label="Reflective loop console">
+          <div class="console__bar">
+            <span></span><span></span><span></span>
+          </div>
+          <pre id="consoleText"></pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="section timeline" id="timeline">
+      <div class="section__head">
+        <p class="kicker">Trajectory</p>
+        <h2>From scripts to self-correcting systems.</h2>
+      </div>
+      <div class="timeline__rail" id="timelineRail"></div>
+    </section>
+
+    <section class="section contact" id="contact">
+      <div>
+        <p class="kicker">Next project</p>
+        <h2>Make the portfolio yours.</h2>
+      </div>
+      <p>
+        Replace the profile, repository links, and timeline with your real work, then publish it as a polished personal resume.
+      </p>
+      <div class="contact__actions">
+        <a class="button button--primary" id="githubLink" href="#" target="_blank" rel="noreferrer">GitHub</a>
+        <a class="button button--ghost" id="emailLink" href="#">Email</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
+

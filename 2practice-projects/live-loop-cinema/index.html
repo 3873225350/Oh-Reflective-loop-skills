@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live Loop Cinema</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="deck" class="deck" tabindex="0" aria-label="Live Loop Cinema interactive deck">
+      <canvas id="field" aria-hidden="true"></canvas>
+
+      <header class="deck-top">
+        <a href="../portfolio-resume/index.html" class="brand">Reflective Practice</a>
+        <nav id="sceneNav" class="scene-nav" aria-label="Scene navigation"></nav>
+        <button id="themeBtn" class="icon-btn" type="button" title="Switch visual mode" aria-label="Switch visual mode">◐</button>
+      </header>
+
+      <main id="sceneRoot" class="scene-root" aria-live="polite"></main>
+
+      <aside class="side-rail" aria-label="Scene progress">
+        <span id="sceneCount">01 / 06</span>
+        <div class="rail-track"><span id="railProgress"></span></div>
+        <span id="sceneMode">narrative</span>
+      </aside>
+
+      <footer class="deck-bottom">
+        <button id="prevBtn" class="text-btn" type="button">Back</button>
+        <button id="playBtn" class="text-btn primary" type="button">Play</button>
+        <button id="nextBtn" class="text-btn" type="button">Next</button>
+      </footer>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

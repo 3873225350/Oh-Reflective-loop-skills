@@ -72,13 +72,13 @@ invoke_agent() {
     local model="$1"
     local prompt_file="$2"
 
-    claude --model "${model}" "$(cat "${prompt_file}")" 2>&1 | tee -a "${dispatch_log}"
+    claude -p --model "${model}" < "${prompt_file}" 2>&1 | tee -a "${dispatch_log}"
     return ${PIPESTATUS[0]}
 }
 
 get_models() {
-    echo "claude-sonnet-4-20250514
-claude-haiku-4-20250514"
+    echo "sonnet
+haiku"
 }
 
 main() {
